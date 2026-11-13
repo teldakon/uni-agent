@@ -33,11 +33,15 @@ class RequestSamplingConfig(BaseModel):
     top_p: float | None = None
     top_k: int | None = None
     max_tokens_per_turn: int | None = None
+    extra_body: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Provider-specific top-level chat completion parameters.",
+    )
     model_config = ConfigDict(extra="forbid")
 
-    def sampling_params(self) -> dict[str, float | int]:
+    def sampling_params(self) -> dict[str, Any]:
         """Return configured white-box sampling overrides."""
-        return {
+        overrides = {
             key: value
             for key, value in {
                 "temperature": self.temperature,
@@ -47,6 +51,7 @@ class RequestSamplingConfig(BaseModel):
             }.items()
             if value is not None
         }
+        return {**self.extra_body, **overrides}
 
 
 class AgentConfig(BaseModel):

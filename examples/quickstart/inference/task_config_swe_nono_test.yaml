@@ -1,0 +1,52 @@
+name: swe_nono_test
+sandbox:
+  provider: nono
+  runtime_timeout: 7200
+run_oracle_solution: false
+eval_timeout: 600
+agent:
+  name: react
+  model:
+    base_url: "${oc.env:BASE_URL}"
+    model_name: "${oc.env:MODEL}"
+    api_key: "${oc.env:API_KEY}"
+  max_steps: 200
+  tools:
+    - name: str_replace_editor
+    - name: stateful_shell
+      command_timeout: 180
+      env_vars:
+        PAGER: cat
+        GIT_PAGER: cat
+        TQDM_DISABLE: "1"
+        PIP_PROGRESS_BAR: "off"
+    - name: submit
+  sampling_params_override:
+    temperature: 1.0
+    top_p: 0.95
+    max_tokens_per_turn: 4096
+    extra_body:
+      thinking:
+        type: disabled
+prompt_template:
+  - role: system
+    content: You are a helpful assistant that can interact with a computer to solve software engineering tasks.
+  - role: user
+    content: |-
+      Fix the following issue in the prepared Python repository:
+
+      <issue_description>
+      {problem_statement}
+      </issue_description>
+
+      The shell starts in an isolated, writable copy of the repository. Run
+      `pwd` to discover its absolute path and use that path for file editor
+      calls. Keep all repository changes within this working copy.
+      The Python environment and dependencies have already been prepared.
+
+      {environment_instructions}
+
+      Explore the relevant code, reproduce the issue when practical, and make
+      the minimal changes to non-test files needed to fix it. Do not modify
+      existing tests. Run relevant tests and check edge cases to verify your
+      changes, then submit your solution using the `submit` tool.

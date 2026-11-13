@@ -25,6 +25,7 @@ TASK_MODULES: dict[str, str] = {
     "swe_bench": "uni_agent.tasks.swe_bench.task",
     "swe_bench_multilingual": "uni_agent.tasks.swe_bench_multilingual.task",
     "swe_bench_pro": "uni_agent.tasks.swe_bench_pro.task",
+    "swe_nono_test": "uni_agent.tasks.swe_nono_test.task",
     "swe_rebench": "uni_agent.tasks.swe_rebench.task",
     "hotpotqa": "uni_agent.tasks.hotpotqa.task",
     "deepeyes": "uni_agent.tasks.deepeyes.task",

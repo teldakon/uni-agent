@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import functools
+import os
+import re
 import string
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+_ENV_REFERENCE = re.compile(r"\$\{oc\.env:([A-Za-z_][A-Za-z0-9_]*)\}")
 
 
 def _deep_merge(base: dict, overrides: dict) -> dict:
@@ -134,4 +138,21 @@ class TaskConfigResolver:
         model_binding = {key: value for key, value in (runtime_model or {}).items() if value is not None}
         if model_binding:
             resolved = _deep_merge(resolved, {"agent": {"model": model_binding}})
+
+        agent = resolved.get("agent", {})
+        model = agent.get("model", {}) if isinstance(agent, Mapping) else {}
+        if isinstance(model, Mapping):
+            environment_model = {}
+            for field_name in ("base_url", "api_key", "model_name"):
+                value = model.get(field_name)
+                match = _ENV_REFERENCE.fullmatch(value) if isinstance(value, str) else None
+                if match is None:
+                    continue
+                variable = match.group(1)
+                environment_value = os.environ.get(variable)
+                if not environment_value:
+                    raise ValueError(f"Environment variable {variable} must be set and non-empty")
+                environment_model[field_name] = environment_value
+            if environment_model:
+                resolved = _deep_merge(resolved, {"agent": {"model": environment_model}})
         return resolved
